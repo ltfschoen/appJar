@@ -497,6 +497,7 @@ class gui(object):
         # won't pack, if don't pack it here
         self.tb = Frame(self.appWindow, bd=1, relief=RAISED)
         self.tb.pack(side=TOP, fill=X)
+        self.tbMinMade = False
 
         # create the main container for this GUI
         container = Frame(self.appWindow)
@@ -4435,6 +4436,7 @@ class gui(object):
             lb.see(pos)
             lb.activate(pos)
             lb.selection_set(pos)
+            self.topLevel.update_idletasks()
 
     # replace the list items in the list box
     def updateListItems(self, title, items):
@@ -5475,7 +5477,7 @@ class gui(object):
 # FUNCTIONS for tool bar
 #####################################
     # adds a list of buttons along the top - like a tool bar...
-    def addToolbar(self, names, funcs, findIcon=False):
+    def addToolbar(self, names, funcs, findIcon=False, pinned=True):
         if not self.hasTb:
             self.hasTb = True
 
@@ -5518,6 +5520,22 @@ class gui(object):
             but.pack(side=LEFT, padx=2, pady=2)
             but.tt_var = self.__addTooltip(but, t.title(), True)
 
+        self.setToolbarPinned(pinned)
+
+
+    def setToolbarPinned(self, pinned=True):
+        self.tbPinned = pinned
+        if not self.tbPinned:
+            if not self.tbMinMade:
+                self.tbMinMade = True
+                self.tbm = Frame(self.appWindow, bd=1, relief=RAISED)
+                self.tbm.config(bg="gray", height=3)
+                self.tb.bind("<Leave>", self.__minToolbar)
+                self.tbm.bind("<Enter>", self.__maxToolbar)
+            self.__minToolbar()
+        else:
+            self.__maxToolbar()
+
     def setToolbarIcon(self, name, icon):
         if (name not in self.n_tbButts):
             raise Exception("Unknown toolbar name: " + name)
@@ -5555,15 +5573,31 @@ class gui(object):
             else:
                 self.n_tbButts[but].config(state=NORMAL)
 
+    def __minToolbar(self, e=None):
+        if not self.tbPinned:
+            if self.tbMinMade:
+                self.tbm.config(width=self.tb.winfo_reqwidth())
+                self.tbm.pack(before=self.containerStack[0]['container'], side=TOP, fill=X)
+            self.tb.pack_forget()
+
+    def __maxToolbar(self, e=None):
+        self.tb.pack(before=self.containerStack[0]['container'], side=TOP, fill=X)
+        if self.tbMinMade:
+            self.tbm.pack_forget()
+
     # functions to hide & show the toolbar
     def hideToolbar(self):
         if self.hasTb:
             self.tb.pack_forget()
+            if self.tbMinMade:
+                self.tbm.pack_forget()
 
     def showToolbar(self):
         if self.hasTb:
             self.tb.pack(before=self.containerStack[0][
                          'container'], side=TOP, fill=X)
+            if self.tbMinMade:
+                self.tbm.pack_forget()
 
 #####################################
 # FUNCTIONS for menu bar
