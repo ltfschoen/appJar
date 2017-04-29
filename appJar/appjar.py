@@ -5520,12 +5520,42 @@ class gui(object):
             but.pack(side=LEFT, padx=2, pady=2)
             but.tt_var = self.__addTooltip(but, t.title(), True)
 
+
+        # add the pinned image
+        self.pinBut = Label(self.tb)
+        # try to get the icon, if none - then set but to None, and ignore from now on
+        imgFile = os.path.join(self.icon_path, "pin.gif")
+        try:
+            imgObj = self.__getImage(imgFile)
+        except:
+            self.pinBut = None
+            
+        # if image found, then et up the label
+        if self.pinBut is not None:
+            if gui.GET_PLATFORM() == gui.MAC:
+                self.pinBut.config(cursor="pointinghand")
+            elif gui.GET_PLATFORM() in [gui.WINDOWS, gui.LINUX]:
+                self.pinBut.config(cursor="hand2")
+
+            self.pinBut.bind("<Button-1>", self.__toggletb)
+            self.pinBut.config(image=imgObj)#, compound=TOP, text="", justify=LEFT)
+            self.pinBut.image = imgObj  # keep a reference!
+            self.pinBut.pack(side=RIGHT, anchor=NE, padx=0, pady=0)
+
         self.setToolbarPinned(pinned)
 
+    # called by pinBut, to toggle the pin status of the toolbar
+    def __toggletb(self, event=None):
+        self.setToolbarPinned(not self.tbPinned)
 
     def setToolbarPinned(self, pinned=True):
         self.tbPinned = pinned
         if not self.tbPinned:
+            if self.pinBut is not None:
+                try:
+                    self.pinBut.image = self.__getImage(os.path.join(self.icon_path, "unpin.gif"))
+                except:
+                    pass
             if not self.tbMinMade:
                 self.tbMinMade = True
                 self.tbm = Frame(self.appWindow, bd=1, relief=RAISED)
@@ -5534,7 +5564,15 @@ class gui(object):
                 self.tbm.bind("<Enter>", self.__maxToolbar)
             self.__minToolbar()
         else:
+            if self.pinBut is not None:
+                try:
+                    self.pinBut.image = self.__getImage(os.path.join(self.icon_path, "pin.gif"))
+                except:
+                    pass
             self.__maxToolbar()
+
+        if self.pinBut is not None:
+            self.pinBut.config(image=self.pinBut.image)
 
     def setToolbarIcon(self, name, icon):
         if (name not in self.n_tbButts):
