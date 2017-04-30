@@ -942,6 +942,12 @@ class gui(object):
             # on MAC & LINUX, w_width/w_height always 1
             # on WIN, w_height is bigger then r_height - leaving empty space
 
+            # show the tb if needed
+            toggleTb = False
+            if self.hasTb and not self.tbPinned:
+                self.__toggletb()
+                toggleTb = True
+
             # get the apps requested width & height
             r_width = self.__getTopLevel().winfo_reqwidth()
             r_height = self.__getTopLevel().winfo_reqheight()
@@ -987,6 +993,10 @@ class gui(object):
 
             # and set it as the minimum size
             self.__getTopLevel().minsize(width, height)
+
+            # remove the tb again if needed
+            if toggleTb:
+                self.__toggletb()
 
             # if the window hasn't been positioned by the user, put it in the
             # middle
@@ -5477,7 +5487,7 @@ class gui(object):
 # FUNCTIONS for tool bar
 #####################################
     # adds a list of buttons along the top - like a tool bar...
-    def addToolbar(self, names, funcs, findIcon=False, pinned=True):
+    def addToolbar(self, names, funcs, findIcon=False):
         if not self.hasTb:
             self.hasTb = True
 
@@ -5522,15 +5532,23 @@ class gui(object):
 
 
         # add the pinned image
-        self.pinBut = Label(self.tb)
+        self.pinBut = None
+
+    def __setPinBut(self):
+
+        # only call this once
+        if self.pinBut is not None:
+            return
+
         # try to get the icon, if none - then set but to None, and ignore from now on
         imgFile = os.path.join(self.icon_path, "pin.gif")
         try:
             imgObj = self.__getImage(imgFile)
+            self.pinBut = Label(self.tb)
         except:
-            self.pinBut = None
+            return
             
-        # if image found, then et up the label
+        # if image found, then set up the label
         if self.pinBut is not None:
             if gui.GET_PLATFORM() == gui.MAC:
                 self.pinBut.config(cursor="pointinghand")
@@ -5540,9 +5558,8 @@ class gui(object):
             self.pinBut.bind("<Button-1>", self.__toggletb)
             self.pinBut.config(image=imgObj)#, compound=TOP, text="", justify=LEFT)
             self.pinBut.image = imgObj  # keep a reference!
+            self.__addTooltip(self.pinBut, "Click here to pin/unpin the toolbar.", True)
             self.pinBut.pack(side=RIGHT, anchor=NE, padx=0, pady=0)
-
-        self.setToolbarPinned(pinned)
 
     # called by pinBut, to toggle the pin status of the toolbar
     def __toggletb(self, event=None):
@@ -5550,6 +5567,7 @@ class gui(object):
 
     def setToolbarPinned(self, pinned=True):
         self.tbPinned = pinned
+        self.__setPinBut()
         if not self.tbPinned:
             if self.pinBut is not None:
                 try:

@@ -18,8 +18,6 @@ app = gui()
 app.addToolbar(["Save", "Open", "Close", "a", "b", "c", "d", "e", "f", "g"], tbFunc, True)
 
 app.addButtons(["Pin", "Unpin", "Hide", "Show"], [pin, unpin, tbOut, tbIn])
-app.addLabel("l1", "", colspan=2)
-#app.setLabelOverFunction("l1", [tbIn, tbOut])
 #app.setToolbarPinned(False)
 
 app.go()
